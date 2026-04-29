@@ -1,0 +1,50 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+    
+    - name: Run tests with coverage
+      run: |
+        cd src
+        go test -v -coverprofile=coverage.out ./...
+        go tool cover -func=coverage.out
+    
+    - name: Calculate coverage percentage
+      id: coverage
+      run: |
+        cd src
+        COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | sed 's/%//')
+        echo "coverage=$COVERAGE" >> $GITHUB_OUTPUT
+        echo "Coverage: $COVERAGE%"
+    
+    - name: Check coverage threshold
+      if: ${{ failure() || (steps.coverage.outputs.coverage != '' && steps.coverage.outputs.coverage < 60) }}
+      run: |
+        echo "::error::Code coverage (${{ steps.coverage.outputs.coverage }}%) is below the required 60% threshold"
+        exit 1
+    
+    - name: Coverage check passed
+      if: ${{ success() && steps.coverage.outputs.coverage >= 60 }}
+      run: echo "✓ Code coverage (${{ steps.coverage.outputs.coverage }}%) meets the 60% threshold"
+    
+    - name: Build project
+      if: ${{ success() && steps.coverage.outputs.coverage >= 60 }}
+      run: |
+        cd src
+        go build -o ../build/ci-test .
+        echo "✓ Build successful - output: build/ci-test"
