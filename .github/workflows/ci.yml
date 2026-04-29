@@ -48,3 +48,14 @@ jobs:
         cd src
         go build -o ../build/ci-test .
         echo "✓ Build successful - output: build/ci-test"
+    
+    - name: Commit build artifacts
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add build/ci-test
+        git commit -m "CI: Build artifact updated" || echo "No changes to commit"
+    
+    - name: Push build artifacts
+      run: |
+        git push

@@ -56,12 +56,36 @@ go tool cover -html=coverage.out
 
 - `add(a, b int) int`: Returns the sum of two integers
 - `subtract(a, b int) int`: Returns the difference of two integers
+- `multiply(a, b int) int`: Returns the product of two integers
+- `divide(a, b int) (int, error)`: Returns the quotient of two integers; returns error if dividing by zero
+- `modulus(a, b int) (int, error)`: Returns the remainder of division; returns error if dividing by zero
 
 ## CI/CD Pipeline
 
 The GitHub Actions workflow automatically:
-1. Runs all tests
-2. Calculates code coverage
+1. Runs all tests with verbose output
+2. Calculates code coverage percentage
 3. Validates coverage meets the 60% threshold
-4. Continues pipeline only if threshold is met
-5. Fails and notifies if coverage is insufficient
+4. **Builds the binary** if coverage threshold is met
+5. **Commits and pushes** the build artifact to the `build/` directory
+6. Fails and notifies if coverage is insufficient
+
+### Build Output
+
+- **Binary location**: `build/ci-test`
+- **Automatically committed**: Yes (when coverage > 60%)
+- **Build trigger**: Every push to `main` or `develop` branches
+
+### Running the Built Binary
+
+After the workflow completes successfully, you can find the compiled binary in the `build/` directory:
+
+```bash
+./build/ci-test
+```
+
+## Workflow Status
+
+The workflow file is located at `.github/workflows/ci.yml` and is triggered on:
+- Push to `main` or `develop` branches
+- Pull requests to `main` or `develop` branches
